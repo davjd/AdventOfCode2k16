@@ -1,0 +1,110 @@
+/*
+ * =====================================================================================
+ *
+ *       Filename:  Day2.cpp
+ *
+ *    Description:  
+ *
+ *        Version:  1.0
+ *        Created:  12/11/2016 02:26:03 AM
+ *       Revision:  none
+ *       Compiler:  gcc
+ *
+ *         Author:  YOUR NAME (), 
+ *   Organization:  
+ *
+ * =====================================================================================
+ */
+#include <iostream>
+#include <vector>
+using namespace std;
+
+// Left- 0, Up- 1, Right- 2, Down- 3
+enum Direction{L,U,R,D};
+struct coordinate{ // self explanatory.
+	int x;
+	int y;
+} point;
+
+void initGrid(int grid[][3]){
+	int sum = 0;
+	for(int y = 0; y < 3; ++y){
+		for(int x = 0; x < 3; ++x) grid[y][x] = ++sum;
+	}
+}
+int getAdder(coordinate& point, Direction nextDir){
+	if(nextDir == L || nextDir == R){
+		// we will change the x coordinate.
+		if(nextDir == L && (point.x - 1 > - 1)) return -1;
+		else if(nextDir == R && (point.x + 1) < 3) return 1;
+	}
+	else{ // we'll change the y coordinate.
+		if(nextDir == D && (point.y + 1) < 3) return 1;
+		else if(nextDir == U && (point.y - 1) > -1) return -1;
+	}
+	return 0; // if no change is needed.
+}
+void updatePoint(coordinate& position, Direction nextDir){
+	int adder = getAdder(position, nextDir);
+	if(adder == 0) return; // no change.
+	if(nextDir == L || nextDir == R){ // are we changing the x coordinate?
+		position.x += adder;
+	}
+	else position.y += adder; // or the y coordinate?
+}
+int getNewCode(int grid[][3], coordinate& point){
+	return grid[point.y][point.x]; // return the new code using the updated coordinate.
+}
+void parseDirections(string str, vector<string>& guide){
+	string code = "";
+	for(int i = 0; i < str.length(); ++i){
+		if(str[i] == ' '){
+			guide.push_back(code);
+			code = "";
+		}
+		else code += str[i];
+	}
+	guide.push_back(code); // add last code.
+}
+Direction getDirection(char code){
+	switch(code){
+		case 'L':
+			return L;
+		case 'U':
+			return U;
+		case 'R':
+			return R;
+		case 'D':
+			return D;
+	}
+}
+void setCodes(vector<int>& codes, vector<string>& guide, int grid[][3], coordinate& position){
+	for(int i = 0; i < guide.size(); ++i){
+		string codeln = guide[i];
+		for(int j = 0; j < codeln.length(); ++j){
+			updatePoint(position,getDirection(codeln[j]));
+		}
+		codes.push_back(getNewCode(grid,point));
+	}
+}
+int main(){
+	
+	// initialize stuff.
+	int grid[3][3]; // security grid.
+	initGrid(grid);
+	vector<string> guide; // vector of the directions.
+	string r = "ULL RRDDD LURDL UUUUD"; // this will parsed into the codes vector.
+	r = "RRLLDDRLLDURLDUUDULDLRLDDDRLDULLRDDRDLUUDLLRRDURRLUDUDULLUUDRUURRDDDDURUULLDULRLRRRDLLLRDLRDULDLRUUDRURLULURUUDRLUUDRDURUUDDDRDLLRDLUDRLUUUUUULDURDRDDURLDDRLUUDLRURRDRLDRDLRRRLURULDLUUURDRLUULRDUDLDRRRDDLDDDRLRLLDRDUURDULUURRRRUDLLUDLDRLLRRULLLRDRDRRDRDRDUULUDLULRLLDRULURLURDLLDDRRLUDRDUULLDRULLLRLULUDDLURLUULDRUDRLDUUDDLLLRURDRLDRLUUUUUUDRUDLDLULULRRURRDDDUDRRRDDDLDDLRLLDDUULLUDRURDDDRDDLURRURULULUUDRLLUUDDDRUULRDLDLLRUUDRRLRRRULLRRURUDDUUDULDUDUUUDURUDUUDUDRULUDULRDUDUUUUDLLURDLRRUDURDDUULLDLLRDUDULRLRDURLRDRDLRDLRURUDURLULDDDLDRLULLRLURRLLDLRLLULLDUURUUDRULDDUDLDDR LUURULURUURRRDLRDRDDDUDULRDDLUUDUUULRLRRLRUDDLDLURLRULUUDUUDLDRLLUURLUUURDUDLUULLUUDUUDRDUDUDURLLURDUDLDLDDLDUDRLLUULDDRUDDDRLRUDRDUDULLRRDLLDDLRLLLRLRURURLLDULUDDUULULDRRLUURDULRULUDULDULDULRULLLRRDRLDRLDUULLDDULRLUDLLLULDDLULLUULUURRULDLUULDRRUDDDLRDLULDULDRRDLRRRLRUDURUDDDUDDURRRLDUULRDDLRRRLRUULDDURDRDUULDLLULULDRDRUULDLULRUUDUDLUDRLRDURRRRLULURDRLLLUDRRRDRURRLRLLUURDLURLURDULURUDDULLDUUDDLRLUULRDUUDRDRUDRLUUUDURLLRDRRDRURDDDDULLDDUDLDUUDLRLURURLDRRDRDUDLRRDRUDRDLURRLLLULULULRUDDDULULULDDRRLULUUUURDDURURLDLDDDDDRULUUUULLUDDDRRLUULDUULRUUDUURRLLRDDRUURL RRRLLLLUULLRRLLDRULULLLRDLLDLDDLURUDLULUULLRURLDULLUDULDRURDURLULLDUDDRLLRUURDLLULUURLULLDLRRDDDULUURRUDRDRDURULDLLURUDLLLDDUDLLLLRLDRDRDDRRDLUUDLLLULLLLLDDRDLULLLLRURRRUUUULLDLRDLDLRRRULRRRRLDLLRDURULDDLURURUULULDRDDDURLRDDRDULLUURUDUUUDRDRRLURULULRLUUDDRDULDRLULULUULRLDRLUDRRDDDRUDDRDDRDDRRLRDLRURDULULRRUUURDRRRDURDDRUDULUUDRDDLDRDDDULDLRDUULDUULRUDLRRDDDLLDDLLLRRDLDUULUULULURRULLRRUDUDRUDRRRLDLRLURRLUDLLLUUDDUDRURUUDDURDURULRLDUDRDLULDUDRUDDDR DRDRRUUUUURRLUDLDLRUUULRLDLRRRDDUDLUUDUDDLRDUDLRRLLURUUDULLUDLULLDLLDDULUDDUDUULURLDLDDUUDDRDDRLUURLUUDUDUDURULLDRLDDRUDLURRRLDRLRULDDLDDLDDDULDUDDLLDULUUDUDDUULDRLDRLRURDULUDDRRLRRLRRDULDRRDUDUDRLDURRLRLRDLRLRRLRDDDRULLULULDUDDLDLULRLLURRRRULUULRUDLDLRDLLURURUUURDRRRLDDRLRLURDDURDDUURUUUDDLRUURRRDLLUULUDRLDDRDDDDUUDRLRRDULDULRDLLLRULULLRDRULLRDLRUUURRRURLRRDLDRDDLURLDLULLDUURRDULUUURRLLDDUUUULDDDDLRDDDRDLDLLUURLDDRULUDDRDDDLRDU DRRRLURUDUDUULDLLURLUUDDRRRDUDLURLLDRRLLDDURULUDUURURULLRLDLLUURDLLDLLDLDLRUDLLLLDRLLUDLLDULDDRRURDRRLRLRRUURRUDURRLDRDLDURUULUDRLLURLUDURDULLRLLDLURLRRDLLLLUUDRDULLDLURDULDRDURRRLDRLURULULURLLLRRRUULRLRRDRDDDLULRLRRDLUDDUUUUUDRRDLDUDUURLDRRRLRUDRULDRLURUULRDLDDLRURDLURULRRLDURLDUURURULRDUDRRUDUDDLRLUURURULDDLULULULDULRRLRRURUURLRLLDRRLUDLUURDRRURRUUDULRLURRLRLRDDRURDDLRRDUDRLLUUUDULRDRULUURRLRLRDUDULDRDLLUDRDLLDRULDLUUURDDRDDUDDULLLDRRDDUDDDDLDDRLRULRRRURRDRULLDDDURDDLURRDDDUDLURRUDUDLLDDDLRUUDRLRRLRDUUUDDL";
+	vector<int> codes; // vector of codes to be entered.
+	point.x = 1;
+	point.y = 1;
+
+	parseDirections(r, guide);
+	setCodes(codes,guide,grid, point);
+	for(int i = 0; i < codes.size(); ++i){
+		cout << codes[i] << endl;
+	}
+
+		
+}
+
