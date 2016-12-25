@@ -21,7 +21,7 @@
 #include <utility>
 #include <fstream>
 #include <algorithm>
-
+#include <vector> 
 bool isLetter(char c){ return (c >= 'a' && c <= 'z');} // to check if character is a letter, expecting lwercase char.
 std::string getName(std::string s){ // retrieves the letters of the name of the room.
 	std::string tmp = "";
@@ -74,13 +74,9 @@ std::string getValidCSum(std::string s){ // will return the valid checksum.
 		if(doesExist(dictionary,s[i])) ++dictionary[s[i]]; // update duplicate counter.
 		else dictionary.insert(std::make_pair(s[i], 1)); // add letter and update counter.
 	}
-	std::cout << "items in dictionary: \n\n";
+
 	std::multimap<int, char> dst = flip_map(dictionary); // by flipping the map, we will sort it by value.
 	std::map<int, char>::reverse_iterator iter;
-	for(iter = dst.rbegin(); iter != dst.rend(); ++iter){
-		std::cout << (*iter).first <<": " << (*iter).second << "\n\n";
-	}
-
 	std::string checksum = ""; // will contain string of checksum
 	std::map<int, char>::reverse_iterator h; // will store the highest repeated letter.
 	for(int i = 0; i < 5; ++i){ // we need to extract the top 5 most repetives.
@@ -92,22 +88,85 @@ std::string getValidCSum(std::string s){ // will return the valid checksum.
 		dst.erase(std::next(h).base()); // delete the letter from the sorted map.
 	}
 	return checksum;
-	//std::cout << "checksum: " << checksum << "\n\n";
 }
+char shift(char ch, int shift){
+	return ch == 'z' || ch == 'Z' ? ch - 25 : ch + 1;
+}
+void split(std::string s, std::vector<std::string> &ln){
+	std::string tmp = "";
+	for(int i = 0;i < s.length(); ++i){
+		if(isLetter(s[i])) tmp += s[i];
+		else{
+			ln.push_back(tmp);
+			tmp = "";
+		}	
+	}
+	ln.push_back(tmp);
+}
+
+
 int main(){
 
+	std::vector<std::string> validInputs; // THIS IS FOR PART B --> will hold valid room inputs
+	std::vector<std::string> allInputs;
 	std::ifstream file("input.txt"); // get file.
 	//std::string ln = "aaaaa-bbb-z-y-x-123[abxyz]";
 	std::string ln; // will hold line of room input.
 	std::string name; // will hold name of room.
 	int sum = 0;
-	std::cout << getName(ln) << "\n\n";
+	int t = 0;
 	while(file >> ln){
+		++t;
 		name = getName(ln);
-		std::cout << ln << "\n\n\n";
-		if(isValid(getValidCSum(name),getCheckSum(ln))) sum += getId(ln); // check if the checksum is valid. if so add to sum
+		//std::cout << ln << "\n\n\n";
+		if(isValid(getValidCSum(name),getCheckSum(ln))){ 
+			sum += getId(ln); // check if the checksum is valid. if so add to sum
+			// FOR PART B --> we'll save the valid room inputs.
+			validInputs.push_back(ln);
+		}
+		allInputs.push_back(ln);
 	}
-	std::cout << "sum: " << sum;
-	
+	std::cout << "sum: " << sum; // PART A SOLUTION.
+	std::vector<std::string>::iterator iter = allInputs.begin();
+	int s;
+	int end;
+	std::string decrypt = ""; // will hold the decrypted line.
+	int newC;
+	std::vector<std::string> names;
+	for(; iter != allInputs.end(); ++iter){
+		ln = *iter;
+		end = ln.length() - 11;
+		s = getId(ln) % 26; // find out how many real shifts we'll have to execute.
+		//std::cout << ln << "\nshift: " << s <<"\n";
+		for(int i = 0; i < end; ++i){
+
+			if(isLetter(ln[i])){
+				newC = static_cast<int>(ln[i]) + s;
+				if(static_cast<int>('z') < newC){
+					// check bounds.
+					--newC;
+					decrypt += static_cast<int>('a') + (newC - static_cast<int>('z'));
+				}
+				else decrypt += newC;
+			}
+			else decrypt += " ";
+		}
+		names.push_back(decrypt);
+		std::vector<std::string> splitted;
+		split(decrypt,splitted);
+		//std::cout << "\nSPLIT: \n";
+		for(int j = 0; j < splitted.size(); ++j){ 
+			if(splitted[j] == "northpole" || splitted[j] == "north" || splitted[j] == "pole" || splitted[j] == "objects"){ 
+				std::cout << splitted[j] << "\n\n";
+				std::cout << decrypt << "\n";
+				std::cout << "\n\n\n------------FOUND----------\n\n\n" << *iter << "\n";
+			}
+		}
+		//std::cout << "\n\n";
+		//std::cout << "decrypted: " << decrypt << "\n\n";
+		decrypt = ""; // reset string.
+	}
+	for(int i = 0; i < names.size(); ++i) std::cout << names[i] << "\n";
+	std::cout << "total: " << t << ": " << allInputs.size() << "\n";
 	return 0;
 }
